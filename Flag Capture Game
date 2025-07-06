@@ -1,0 +1,214 @@
+#include<iostream>
+#include<sstream>
+#include<string>
+#include<chrono>
+#include<thread>
+#include<atomic>
+#include<cmath>
+#include<vector>
+#include<map>
+#include<algorithm>
+#include<ctime>
+#include<iomanip>
+#include<stack>
+#include<unordered_map>
+#include<fstream>
+#include<set>
+#define RED     "\033[1;31m"
+#define BLUE    "\033[1;34m"
+#define RESET   "\033[0m"
+using namespace std;
+
+const int SIZE = 5;
+
+void print_board(char board[SIZE][SIZE]){
+    cout<<"  0 1 2 3 4 \n";
+    for(int i = 0; i<SIZE; i++){
+        cout<<i<<" ";
+        for(int j = 0; j<SIZE; j++){
+            if(board[i][j] == 'W'){
+                cout<<RED <<board[i][j]<<RESET<<" ";
+            }
+            else if(board[i][j] == 'B'){
+                cout<<BLUE <<board[i][j]<<RESET<<" ";
+            }
+            else cout<<board[i][j]<<" ";
+        }
+        cout<<endl;
+    }    
+}
+
+bool is_valid(int x, int y){    
+    return x>=0 && x <= 4 && y>=0 && y <= 4;
+}
+
+void move_player(char player, int &pos_x, int &pos_y, char board[SIZE][SIZE]){
+    char move;
+
+    cout<< (player == 'B' 
+        ? string(BLUE) + "Black Turn\n" + RESET 
+        : string(RED) + "White Turn\n" + RESET);
+    
+    cout<<"Enter Move(w/a/s/d): ";
+    cin>>move;
+
+    int dx = 0, dy = 0;
+    if(move == 'w') dx = -1;
+    else if(move == 'a') dy = -1;
+    else if(move == 's') dx = 1;
+    else if(move == 'd') dy = 1;
+
+    int nx = 0, ny = 0;
+    nx = pos_x + dx;
+    ny = pos_y + dy;
+
+    if(is_valid(nx, ny) && (board[nx][ny] == '.' || board[nx][ny] == 'F')){
+        board[pos_x][pos_y] = '.';
+        pos_x = nx;
+        pos_y = ny;
+
+        board[pos_x][pos_y] = player;
+        }
+    else cout<<"Invalid Move\n";        
+}
+
+int randomize(){
+    int random = rand() % 2 + 1;
+    return random;
+}
+
+void bot_move(char player, int &pos_x, int &pos_y, char board[SIZE][SIZE]){
+    int flagX = 0;
+    int flagY = 2;
+
+    int nx = 0, ny = 0, dx = 0, dy = 0;    
+
+    if(pos_x < flagX) dx = 1;
+    else if(pos_x > flagX) dx = -1;
+    nx = pos_x + dx;
+    ny = pos_y;
+    
+    if(is_valid(nx, ny) && (board[nx][ny] == 'F' || board[nx][ny] == '.')){
+        board[pos_x][pos_y] = '.';
+        pos_x = nx;
+        pos_y = ny;
+        board[pos_x][pos_y] = player;
+        return;
+    }
+
+    dx = 0;
+    if(pos_y < flagY) dy = 1;
+    else if(pos_y > flagY) dy = -1;
+    nx = pos_x;
+    ny = pos_y + dy;
+
+    if(is_valid(nx, ny) && (board[nx][ny] == 'F' || board[nx][ny] == '.')){
+        board[pos_x][pos_y] = '.';
+        pos_x = nx;
+        pos_y = ny;
+        board[pos_x][pos_y] = player;
+        return;
+    }
+
+    
+}
+
+int main(){
+    srand(time(0));
+    
+    char board[SIZE][SIZE];
+    int whiteX = 4, whiteY = 3;
+    int blackX = 4, blackY = 1;
+    int option, posX, posY;
+    char player;
+
+
+     for(int i = 0; i<SIZE; i++){
+        for(int j = 0; j<SIZE; j++){
+            board[i][j] = '.';
+        }
+    }
+
+    board[whiteX][whiteY] = 'W';
+    board[blackX][blackY] = 'B';
+    board[0][2] = 'F';
+
+    cout<<"===Welcome to Flag Capture Game===\n";
+    cout<<"1. Play\n";
+    cout<<"2. Vs AI Bot\n";
+    cout<<"3. Quit\n";
+    cout<<"==================================\n";
+
+    while (true){
+        cout<<"Enter 1-2: ";
+        cin>>option;
+
+        switch(option){
+            case 1: 
+
+                player = (randomize() == 1 ? 'B' : 'W');
+                posX = (player == 'B' ? blackX : whiteX);
+                posY = (player == 'B' ? blackY : whiteY); 
+                
+                while(true){
+                    print_board(board);
+                    move_player(player, posX, posY, board);
+
+                    if (player == 'B') {
+                        blackX = posX;
+                        blackY = posY;
+                    } else {
+                        whiteX = posX;    
+                        whiteY = posY;
+                    }
+
+                    if(blackX == 0 && blackY == 2){
+                        cout<<"\nBlack Won the Game\n";
+                        return 0;
+                    }                        
+
+                    if(whiteX == 0 && whiteY == 2){
+                        cout<<"\nWhite Won the Game\n";
+                        return 0;
+                    }
+                    
+                    player = (player == 'B' ? 'W' : 'B');
+                    posX = (player == 'B' ? blackX : whiteX);
+                    posY = (player == 'B' ? blackY : whiteY);               
+
+                }    
+                        break;
+
+            case 2:
+                
+                while(true){                                   
+                 
+                    print_board(board);
+                    cout<<endl;
+                    move_player('B', blackX, blackY, board); 
+
+                    if(blackX == 0 && blackY == 2){
+                        cout<<"\nBlack Won the Game\n";
+                        return 0;
+                    }                                            
+
+                    bot_move('W', whiteX, whiteY, board);                 
+                    print_board(board);
+                    cout<<endl;
+                    `
+                    if(whiteX == 0 && whiteY == 2){
+                        cout<<"\nWhite Won the Game\n";
+                        return 0;
+                    }                
+                }                    
+                break;
+            
+            case 3:
+                return 0;
+        }
+
+    }           
+    return 0;
+}     
+
+
